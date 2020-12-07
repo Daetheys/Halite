@@ -14,50 +14,41 @@ class QAgent(Agent):
     def __init__(self,model):
         self.model = model
 
-    def get_actions(self,obs):
+    def step(self,obs,ship,actions, ACTIONS, get_actions):
         #Obs is of shape [batch_size,*inp_shape]
+        action_size = len(ACTIONS.keys())
         (obs,config) = obs
-        action = []
         board = Board(obs,config)
+        actions = get_actions(player,ship,config) # Get possible shipyard actions
+        Q = np.zeros((action_size,))
+        new_obs = [None]*action_size
+        for a in actions:
+            obs = simulate(board,ship,a) # Simulate move
+            inps = get_input(obs,config) # Get inputs for nn
+            q = self.model(inps) # Get v value
+            Q[a] = q
+            new_obs[a] = obs
+        Q /= np.sum(Q) # Turn Q into a probability vector and sample next action from it
+        action = np.random.choice(range(action_size),p=Q)
+        board = Board(new_obs[action],config) # Update board
+        return (new_obs[action],config), ACTIONS[action]
+
+    def conversion_step(self,obs,ship,actions):
+        return self.step(obs,ship,actions,SHIPYARD_ACTIONS,get_shipyard_actions)
+
+    def conversion_step(self,obs,ship,actions)
+        return self.step(obs,ship,actions,SHIP_ACTIONS,get_ship_actions)
+
+    def get_actions(self,obs):
+        actions = []
         #Compute Q values
         player = board.current_player
         #1. SPAWNING
-        for sy in player.ships:
-            #Get actions for the ship
-            actions = get_shipyard_actions(player,sy,config)
-            Q = np.zeros((2,))
-            lobs = [None]*2
-            for a in actions:
-                #Simulate move
-                obs = simulate(board,sy,a)
-                #Get inputs for nn
-                inps = get_input(obs,config)
-                #get v value
-                q = self.model(inps)
-                #store v value and observation
-                Q[a] = q
-                lobs[a] = obs
-            #Compute proba off of v values
-            Q /= np.sum(Q)
-            #Sample next action
-            action = np.random.choice(range(2),p=Q)
-            #Get new board with results of the action
-            board = Board(lobs[action],config)
-            #Set action to the ship
-            actions.append((sy,SHIPYARD_ACTIONS[action]))
+        for ship in player.ships:
+            obs, action = self.spawning_step(obs, ship, actions)
+            actions.append(action)
         #2. Conversion and 3. Movement
-        for s in player.ships:
-            actions = get_ship_actions(player,s,config)
-            Q = np.zeros((6,))
-            lobs = [None]*6
-            for a in actions:
-                obs = simulate(board,s,a)
-                inps = get_input(obs,config)
-                q = self.model(inps)
-                Q[a] = q
-                lobs[a] = obs
-            Q /= np.sum(Q)
-            action = np.random.choice(range(6),p=Q)
-            board = Board(lobs[action],config)
-            actions.append((sy,SHIPYARD_ACTIONS[action]))
+        for ship in player.ships:
+            obs, action = self.conversion_step(obs, ship, actions)
+            actions.append(action)
         return actions

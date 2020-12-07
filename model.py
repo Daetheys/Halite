@@ -6,7 +6,15 @@ import numpy as np
 import sys
 
 def wings_model():
-    """Generate Keras model for wing."""
+    """Generate Keras model for wing.
+
+    wings are :
+        - halite ressources
+        - friendly ship
+        - ennemy ship
+        - halite loaded in friendly ships
+        - halite loaded in ennemy ships
+    """
     def wing():
         inp = Input(shape=(21,21,1))
         x = inp
@@ -30,6 +38,7 @@ def wings_model():
     x = MaxPool2D((2,2),padding='valid')(x)
 
     x = Reshape((nb,))(x)
+    x = Dense(10)(x)
     x = Dense(1)(x)
 
     m = tf.keras.Model(inputs=inps,outputs=x)
