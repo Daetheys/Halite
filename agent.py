@@ -36,10 +36,10 @@ class QAgent(Agent):
         board = Board(new_obs[action],config) # Update board
         return (new_obs[action],config), actions[action]
 
-    def conversion_step(self,obs,ship,actions):
+    def conversion_shipyard_step(self,obs,ship,actions):
         return self.step(obs,ship,actions,get_shipyard_actions)
 
-    def conversion_step(self,obs,ship,actions)
+    def conversion_ship_step(self,obs,ship,actions)
         return self.step(obs,ship,actions,get_ship_actions)
 
     def get_actions(self,obs):
