@@ -1,0 +1,27 @@
+from kaggle_environments import make
+from kaggle_environments.envs.halite.helpers import *
+from random import choice
+import time
+import sys
+
+def agent(obs,config):
+    #t = time.clock()
+    board = Board(obs,config)
+    #print(time.clock()-t)
+    me = board.current_player
+
+    # Set actions for each ship
+    for ship in me.ships:
+        ship.next_action = choice([ShipAction.NORTH,ShipAction.EAST,ShipAction.SOUTH,ShipAction.WEST,None])
+
+    # Set actions for each shipyard
+    for shipyard in me.shipyards:
+        shipyard.next_action = None
+
+    return me.next_actions
+
+env = make("halite",debug=True)
+t = time.clock()
+env.run([agent,agent])
+env.run([agent,agent])
+print("--",time.clock()-t)

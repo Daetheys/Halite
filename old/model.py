@@ -15,17 +15,17 @@ def wings_model():
         - halite loaded in friendly ships
         - halite loaded in ennemy ships
     """
-    def wing():
-        inp = Input(shape=(21,21,1))
+    def wing(inp):
+        #inp = Input(shape=(21,21,1))
         x = inp
         nb = 5
         x = Conv2D(nb,(3,3),padding='valid')(x)
         x = Conv2D(nb,(3,3),padding='valid')(x)
-        return inp,x
+        return x
     nb_wings = 5
-    lwings = [wing() for i in range(nb_wings)]
-    inps = [inp for (inp,x) in lwings]
-    x = sum([x for (inp,x) in lwings])
+    inp = Input(shape=(nb_wings,21,21,1))
+    lwings = [wing(inp[:,i]) for i in range(nb_wings)]
+    x = tf.reduce_sum([x for x in lwings],axis=0)
 
     nb = 10
     x = Conv2D(nb,(2,2),padding='valid')(x)
@@ -41,9 +41,9 @@ def wings_model():
     x = Dense(10)(x)
     x = Dense(1)(x)
 
-    m = tf.keras.Model(inputs=inps,outputs=x)
+    m = tf.keras.Model(inputs=inp,outputs=x)
     m.compile(loss="mse",optimizer="Adam")
-    #m.build((1,21,21,1))
+    #m.build((1,5,21,21,1))
     #m.summary()
     return m
 

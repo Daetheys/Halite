@@ -9,10 +9,25 @@ class Env:
     def reset(self):
         pass
 
+CONFIG = {"actTimeout":2,
+          "agentExec":"PROCESS",
+          "agentTimeout":10,
+          "collectRate":0.25,
+          "convertCost":500,
+          "episodeSteps":400,
+          "halite":24000,
+          "moveCost":0,
+          "regenRate":0.02,
+          "runTimeout":600,
+          "size":21,
+          "spawnCost":500}
+
 class HaliteEnv(Env):
     """ Halite Gym Env """
     def __init__(self,nb_agents): #nb players in the game
         self.nb_agents = nb_agents
+        self.kenv = make("halite",debug="True")
+        self.reset()
         
     def step(self,actions):
         for (s,a) in actions:
@@ -21,14 +36,14 @@ class HaliteEnv(Env):
         return (self.board.observation,self.board.configuration)
 
     def reset(self):
-        env = make("halite",debug="True")
-        self.board = Board(env.reset(self.nb_agents)[0].observation,env.configuration)
-        return (self.board.observation,self.board.configuration)
-
+        out = self.kenv.reset(self.nb_agents)[0]["observation"]
+        return out
+        
 class HaliteVecEnv(Env):
     """ Vectorized Halite Gym Env """
     def __init__(self,nb_agents,size):
-        self.envs = [Env(nb_agents) for i in range(size)]
+        self.envs = [HaliteEnv(nb_agents) for i in range(size)]
+        self.config = self.envs[0].kenv.configuration
 
     def step(self,lactions):
         lobs = []
@@ -37,10 +52,17 @@ class HaliteVecEnv(Env):
             lobs.append(obs)
         return lobs
 
+    def stepi(self,action,i):
+        return self.envs[i].step(action)
+
+    def reseti(self,i):
+        obs = self.envs[i].reset()
+        return obs
+
     def reset(self):
         lobs = []
-        for e in self.envs:
-            obs = e.reset()
+        for i in range(len(self.envs)):
+            obs = self.reseti(i)
             lobs.append(obs)
         return lobs
             
