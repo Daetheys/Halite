@@ -123,5 +123,5 @@ class ShipMove(IntEnum):
     COLLECT = 5
 
 class ShipyardMove(IntEnum):
-    HOLD = -1
-    SPAWN = -2
+    HOLD = -2
+    SPAWN = -1

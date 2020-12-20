@@ -33,5 +33,8 @@ class VecBranchModel:
         out1 = self.models[1](outz[s[0]:s[0]+s[1]]).numpy()
         self.out[0][:s[0]] = out0
         self.out[1][:s[1]] = out1
+
+    def parameters(self):
+        return self.modelz.variables + self.models[0].variables + self.models[1].variables
         
 VBM = VecBranchModel

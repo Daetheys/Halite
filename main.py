@@ -8,6 +8,8 @@ vbm = VBM(mz,msh,msy)
 
 trainer = HaliteTrainer(vbm,batch_size=1000)
 
-t = time.perf_counter()
-trainer.step()
-print(time.perf_counter()-t)
+for j in range(200):
+    for i in range(400):
+        trainer.step()
+    trainer.fit()
+    trainer.reset()

@@ -59,6 +59,13 @@ class Game:
         self.halite_regeneration()
         #Step 9 - End
         self.nb_step += 1
+        if self.nb_step == 400:
+            if self.players[0].halite > self.players[1].halite:
+                return 1
+            else:
+                return -1
+        else:
+            return 0
 
     def halite_regeneration(self):
         self.halite_mult *= 1.02
