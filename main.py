@@ -3,6 +3,8 @@ from model import VBM
 from nn import wings_model
 import time
 
+tf.keras.backend.set_floatx('float64')
+
 mz,msh,msy = wings_model()
 vbm = VBM(mz,msh,msy)
 
