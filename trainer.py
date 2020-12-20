@@ -42,6 +42,8 @@ class HaliteTrainer:
         
     def step(self):
 
+        ti = time.perf_counter()
+        
         t = self.games[0].nb_step
         
         out_sh = [[None for __ in range(self.batch_size)] for _ in range(2)]
@@ -60,8 +62,14 @@ class HaliteTrainer:
 
             self.obs_batch[t][i] = [inp_sh_p0,inp_sy_p0,inp_sh_p1,inp_sy_p1]
 
+        print('-',time.perf_counter()-ti)
+        ti = time.perf_counter()
+            
         #Flush
         self.vbm.flush()
+
+        print('--',time.perf_counter()-ti)
+        ti = time.perf_counter()
 
         #Apply actions
         for i,g in enumerate(self.games):
@@ -93,6 +101,8 @@ class HaliteTrainer:
             reward = g._step(actions[0],actions[1])
             self.reward_batch[t,i] = reward
 
+        print('---',time.perf_counter()-ti)
+
     def loss(self,ind_p):
         reward = self.reward_batch.copy()
         if ind_p:
@@ -112,7 +122,7 @@ class HaliteTrainer:
         for t in range(400-1):
             g[400-t-2] = g[400-t-1]*gamma+reward[400-t-2]
 
-        return np.sum(np.log(p)*g)
+        return -np.sum(np.log(p)*g)
             
     def fit(self,nb_epochs=50):
         opt = tf.keras.optimizers.Adam()

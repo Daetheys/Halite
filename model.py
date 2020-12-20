@@ -2,7 +2,7 @@ import tensorflow as tf
 import time
 import numpy as np
 
-MAXBATCHSIZE = 10000
+MAXBATCHSIZE = 20000
 
 class VecBranchModel:
     def __init__(self,modelz,model1,model2):

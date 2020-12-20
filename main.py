@@ -6,10 +6,13 @@ import time
 mz,msh,msy = wings_model()
 vbm = VBM(mz,msh,msy)
 
-trainer = HaliteTrainer(vbm,batch_size=1000)
-
-for j in range(200):
-    for i in range(400):
-        trainer.step()
-    trainer.fit()
-    trainer.reset()
+trainer = HaliteTrainer(vbm,batch_size=100)
+t = time.perf_counter()
+for i in range(40):
+    t2 = time.perf_counter()
+    trainer.step()
+    print(time.perf_counter()-t2)
+t2 = time.perf_counter()
+trainer.reset()
+print(time.perf_counter()-t2)
+print(time.perf_counter()-t)
