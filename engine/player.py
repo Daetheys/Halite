@@ -80,7 +80,7 @@ class Ship:
         if m == ShipMove.LEFT:
             self.x = (self.x-1)%21
         elif m == ShipMove.DOWN:
-            self.y = (self.y-1)%21
+            self.y = (self.y+1)%21
         elif m == ShipMove.RIGHT:
             self.x = (self.x+1)%21
         elif m == ShipMove.UP:
@@ -115,7 +115,6 @@ class Ship:
 
 from enum import IntEnum
 class ShipMove(IntEnum):
-    MOVE = -1
     LEFT = 0
     DOWN = 1
     RIGHT = 2
@@ -124,5 +123,5 @@ class ShipMove(IntEnum):
     COLLECT = 5
 
 class ShipyardMove(IntEnum):
-    HOLD = 0
-    SPAWN = 1
+    HOLD = -1
+    SPAWN = -2

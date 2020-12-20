@@ -1,3 +1,4 @@
+"""
 import threading
 from model import ServerModel
 import time
@@ -22,3 +23,4 @@ def test_server_model1():
 
 if __name__ == '__main__':
     test_server_model1()
+"""

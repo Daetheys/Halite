@@ -1,18 +1,24 @@
 import numpy as np
-from player import Player
-from tools import *
+from engine.player import Player
+from engine.tools import *
 import time
+import copy
 
 class Game:
     def __init__(self,agent1,agent2):
         self.init_halite()
         self.players = [Player(0,agent1,self),Player(1,agent2,self)]
-        self.current_player = 0
         self.nb_step = 0
+
+    def copy(self):
+        return copy.deepcopy(self)
         
     def init_halite(self):
         self.halite = np.zeros((21,21))
         self.halite_mult = 1
+
+    def get_full_halite(self):
+        return self.halite*self.halite_mult
     
     def get_halite(self,x,y):
         return self.halite[y,x]*self.halite_mult
@@ -31,8 +37,14 @@ class Game:
         for ship in actions1[ShipMove.CONVERT]+actions2[ShipMove.CONVERT]:
             ship.convert()
         #Step 3 - Movement
-        for (ship,m) in actions1[ShipMove.MOVE]+actions2[ShipMove.MOVE]:
-            ship.move(m)
+        for ship in actions1[ShipMove.LEFT]+actions2[ShipMove.LEFT]:
+            ship.move(ShipMove.LEFT)
+        for ship in actions1[ShipMove.DOWN]+actions2[ShipMove.DOWN]:
+            ship.move(ShipMove.DOWN)
+        for ship in actions1[ShipMove.RIGHT]+actions2[ShipMove.RIGHT]:
+            ship.move(ShipMove.RIGHT)
+        for ship in actions1[ShipMove.UP]+actions2[ShipMove.UP]:
+            ship.move(ShipMove.UP)
         #Step 4 - Ship collisions
         self.ship_collisions()
         #Step 5 - Shipyard collisions
@@ -77,7 +89,6 @@ class Game:
                     for s2 in ships:
                         h += s2.halite
                         s2.remove()
-                    print(h,self.get_halite(s.x,s.y))
                     self.set_halite(s.x,s.y,self.get_halite(s.x,s.y)+h)
                 else:
                     for i in indexs[1:]:

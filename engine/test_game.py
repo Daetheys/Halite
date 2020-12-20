@@ -1,6 +1,6 @@
-from game import Game
-from player import Player,Ship,Shipyard,ShipMove,ShipyardMove
-from tools import *
+from engine.game import Game
+from engine.player import Player,Ship,Shipyard,ShipMove,ShipyardMove
+from engine.tools import *
 
 def wait_agent(p):
     return actions_dict()
@@ -453,13 +453,14 @@ def test__step():
     p1.add_shipyard(sy2)
 
     actions0 = actions_dict()
-    actions0[ShipMove.MOVE] = [(s3,ShipMove.UP),(s5,ShipMove.RIGHT),(s7,ShipMove.UP)]
+    actions0[ShipMove.UP] = [s3,s7]
+    actions0[ShipMove.RIGHT] = [s5]
     actions0[ShipMove.COLLECT] = [s1]
 
     actions1 = actions_dict()
     actions1[ShipyardMove.SPAWN] = [sy2]
     actions1[ShipMove.CONVERT] = [s6]
-    actions1[ShipMove.MOVE] = [(s2,ShipMove.LEFT)]
+    actions1[ShipMove.LEFT] = [s2]
     actions1[ShipMove.COLLECT] = [s4]
     
     game._step(actions0,actions1)

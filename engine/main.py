@@ -1,5 +1,5 @@
-from game import *
-from tools import *
+from engine.game import *
+from engine.tools import *
 import time
 
 def agent(p):

@@ -15,12 +15,15 @@ def wings_model():
         - halite loaded in friendly ships
         - halite loaded in ennemy ships
     """
+
+    #Z Model
     def wing(inp):
         #inp = Input(shape=(21,21,1))
         x = inp
         nb = 5
         x = Conv2D(nb,(3,3),padding='valid')(x)
         x = Conv2D(nb,(3,3),padding='valid')(x)
+        x = tf.activation.relu(x)
         return x
     nb_wings = 5
     inp = Input(shape=(nb_wings,21,21,1))
@@ -31,21 +34,32 @@ def wings_model():
     x = Conv2D(nb,(2,2),padding='valid')(x)
     x = Conv2D(nb,(3,3),padding='valid')(x)
     x = MaxPool2D((2,2),padding='valid')(x)
+    x = tf.activation.relu(x)
 
     nb = 20
     x = Conv2D(nb,(2,2),padding='valid')(x)
     x = Conv2D(nb,(4,4),padding='valid')(x)
     x = MaxPool2D((2,2),padding='valid')(x)
-
+    x = tf.activation.relu(x)
     x = Reshape((nb,))(x)
-    x = Dense(10)(x)
-    x = Dense(1)(x)
 
-    m = tf.keras.Model(inputs=inp,outputs=x)
-    m.compile(loss="mse",optimizer="Adam")
-    #m.build((1,5,21,21,1))
-    #m.summary()
-    return m
+    mz = tf.keras.Model(inputs=inp,outputs=x)
+
+    #Sh Model
+    inpsh = Input(shape=(nb,))
+    x = inpsh
+    x = Dense(50,activation='relu')
+    x = Dense(6,activation='softmax')
+    msh = tf.keras.Model(inputs=inpsh,outputs=x)
+
+    #Sy Model
+    inpsy = Input(shape=(nb,))
+    x = inpsh
+    x = Dense(50,activation='relu')
+    x = Dense(2,activation='softmax')
+    msy = tf.keras.Model(inputs=inpsy,outputs=x)
+    
+    return mz,msh,msy
 
 class ServerModel:
     """A server to buffer input up to a certain number and feed them to a
