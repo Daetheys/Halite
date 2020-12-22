@@ -9,32 +9,44 @@ class VecBranchModel:
         self.modelz = modelz
         self.models = [model1,model2]
 
-        inp_shape = (MAXBATCHSIZE,*modelz.input_shape[1:])
-        self.inp = [np.zeros(inp_shape) for _ in range(2)]
-        self.inp_index = [0,0]
+        self.input_shape = modelz.input_shape
 
-        out_shape = [(MAXBATCHSIZE,*self.models[i].output_shape[1:]) for i in range(len(self.models))]
-        
-        self.out = [np.zeros(out_shape[i]) for i in range(len(self.models))]
+        self.reset()
 
     def request(self,inp,index):
         x = inp.shape[0]
-        self.inp[index][self.inp_index[index]:self.inp_index[index]+x] = inp
-        self.inp_index[index] += x
-        start_index = self.inp_index[index]
-        return (lambda : self.out[index][start_index-x:start_index])
+        out_ind = len(self.inp[index])
+        self.inp[index].append(inp)
+        
+        return (lambda : self.out[index][out_ind])
 
     def flush(self):
-        inps = [self.inp[i][:self.inp_index[i]] for i in range(2)]
-        s = [len(inps[i]) for i in range(2)]
-        inp = tf.concat(inps,axis=0)
+        inp0 = tf.concat(self.inp[0],axis=0)
+        inp1 = tf.concat(self.inp[1],axis=0)
+        inp = tf.concat([inp0,inp1],axis=0)
         outz = self.modelz(inp)
-        out0 = self.models[0](outz[:s[0]]).numpy()
-        out1 = self.models[1](outz[s[0]:s[0]+s[1]]).numpy()
-        self.out[0][:s[0]] = out0
-        self.out[1][:s[1]] = out1
+        out0 = self.models[0](outz[:inp0.shape[0]])
+        out1 = self.models[1](outz[inp0.shape[0]:inp0.shape[0]+inp1.shape[0]])
+
+        self.out = [[],[]]
+        offset = 0
+        for i in range(len(self.inp[0])):
+            x = len(self.inp[0][i])
+            self.out[0].append(out0[offset:offset+x])
+            offset += x
+        offset = 0
+        for i in range(len(self.inp[1])):
+            x = len(self.inp[1][i])
+            self.out[1].append(out1[offset:offset+x])
+            offset += x
+
+    def reset(self):
+        inp_shape = (0,*self.input_shape[1:])
+        self.inp = [[tf.zeros(inp_shape,dtype=tf.float64)],[tf.zeros(inp_shape,dtype=tf.float64)]]
+        self.out = [[],[]]
 
     def parameters(self):
-        return self.modelz.variables + self.models[0].variables + self.models[1].variables
+        out = self.modelz.variables + self.models[0].variables + self.models[1].variables
+        return out
         
 VBM = VecBranchModel

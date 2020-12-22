@@ -9,12 +9,13 @@ class Game:
         self.init_halite()
         self.players = [Player(0,agent1,self),Player(1,agent2,self)]
         self.nb_step = 0
+        self.length = 400
 
     def copy(self):
         return copy.deepcopy(self)
         
     def init_halite(self):
-        self.halite = np.zeros((21,21))
+        self.halite = build_halite()
         self.halite_mult = 1
 
     def get_full_halite(self):
@@ -59,13 +60,13 @@ class Game:
         self.halite_regeneration()
         #Step 9 - End
         self.nb_step += 1
-        if self.nb_step == 400:
+        if self.nb_step == self.length:
             if self.players[0].halite > self.players[1].halite:
                 return 1
-            else:
+            elif self.players[0].halite < self.players[1].halite:
                 return -1
-        else:
-            return 0
+        return 0
+            
 
     def halite_regeneration(self):
         self.halite_mult *= 1.02

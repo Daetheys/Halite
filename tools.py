@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 from engine.player import ShipMove,ShipyardMove
 from engine.game import Game
 
@@ -46,3 +47,23 @@ def choice(a,p):
     for i in range(a.shape[0]):
         b[i] = np.random.choice(a,1,p=p[i])
 
+def find_nan(a,block=True):
+    print("find nan",a.shape)
+    vmax = a.shape
+    v = [0]*len(vmax)
+    f = False
+    while True:
+        val = a
+        for k in range(len(v)):
+            val = val[v[k]]
+        if np.isnan(val):
+            print("-nan-",v)
+            f = True
+        v[0] += 1
+        for k in range(len(v)):
+            if v[k]>=vmax[k]:
+                v[k] = 0
+                if k+1>=len(vmax):
+                    return 0
+                v[k+1] += 1
+            
