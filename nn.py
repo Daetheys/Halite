@@ -13,21 +13,21 @@ def wings_model():
     """
 
     #Z Model
-    inp = Input(shape=(21,21,7))
+    inp = Input(shape=(21,21,9))
     x = inp
 
-    nb = 5
+    nb = 25
     x = Conv2D(nb,(3,3),padding='valid')(x)
     x = Conv2D(nb,(3,3),padding='valid')(x)
     x = tf.nn.relu(x)
     
-    nb = 10
+    nb = 40
     x = Conv2D(nb,(2,2),padding='valid')(x)
     x = Conv2D(nb,(3,3),padding='valid')(x)
     x = MaxPool2D((2,2),padding='valid')(x)
     x = tf.nn.relu(x)
 
-    nb = 20
+    nb = 150
     x = Conv2D(nb,(2,2),padding='valid')(x)
     x = Conv2D(nb,(4,4),padding='valid')(x)
     x = MaxPool2D((2,2),padding='valid')(x)

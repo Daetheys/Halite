@@ -7,7 +7,7 @@ import tensorflow as tf
 import time
 np.set_printoptions(precision=15)
 
-EPS = 10**-5
+EPS = 10**-3
 
 class Env:
     def step(self,action):
@@ -62,6 +62,8 @@ class HaliteTrainer:
         self.action_batch = np.full((minibatch_size,self.batch_size,4),None,dtype=object)
         # - Whole batches
         self.reward_batch = np.full((self.game_length,self.batch_size),None) #Need to keep all of them to compute outcome
+
+        self.vbm.reset()
 
 
         
@@ -143,6 +145,10 @@ class HaliteTrainer:
             #Store reward
             self.reward_batch[t,i] = reward
 
+        if t == self.game_length-1:
+            print("mean halite p0",np.mean([self.games[i].players[0].halite for i in range(len(self.games))]))
+            print("mean halite p1",np.mean([self.games[i].players[1].halite for i in range(len(self.games))]))
+
         self.vbm.reset()
 
     def process_batch(self):
@@ -168,10 +174,8 @@ class HaliteTrainer:
                                 indices = tf.range(len(sh_action_indexs),dtype=tf.int64)
                                 X,Y = tf.meshgrid(indices,sh_action_indexs)
                                 indexes = tf.stack([X,Y],axis=-1)[0]%6
-                                shp = sh_proba2()+EPS
-                                shp = shp/tf.reduce_sum(shp)
                                 #print("sh",t2,i2,k2,sh_proba2(),shp,sh_action_indexs,indexes)
-                                    
+                                shp = sh_proba2()
                                 shp = tf.gather_nd(shp,indexes)
                             syp = tf.ones((1,),dtype=tf.float64)
                             if not(self.action_batch[t2,i2,2*k2+1] is None):
@@ -179,9 +183,8 @@ class HaliteTrainer:
                                 indices = tf.range(len(sy_action_indexs),dtype=tf.int64)
                                 X,Y = tf.meshgrid(indices,sy_action_indexs)
                                 indexes = tf.stack([X,Y],axis=-1)[0]%2
-                                syp = sy_proba2()+EPS
-                                syp = syp/tf.reduce_sum(syp)
                                 #print("sy",t2,i2,k2,sy_proba2(),syp,sy_action_indexs,indexes)
+                                syp = sy_proba2()
                                 syp = tf.gather_nd(syp,indexes)
                             out = tf.reduce_prod(shp)*tf.reduce_prod(syp)
                             return out
@@ -211,8 +214,9 @@ class HaliteTrainer:
         proba_move = tf.convert_to_tensor(proba_move)
         #find_nan(proba_move)
         #find_nan(self.reduced_gt)
-        loss0 = -tf.math.reduce_sum(tf.math.log(proba_move[:,:,0])*self.reduced_gt)
-        loss1 = -tf.math.reduce_sum(tf.math.log(proba_move[:,:,1])*(-self.reduced_gt))
+        print(tf.reduce_min(proba_move[:,:,0]))
+        loss0 = -tf.math.reduce_mean(proba_move[:,:,0]*tf.math.exp(self.reduced_gt))
+        loss1 = -tf.math.reduce_mean(proba_move[:,:,1]*tf.math.exp(-self.reduced_gt))
         out = loss0#+loss1
         print("loss : ",loss0.numpy(),loss1.numpy(),np.sum(self.reward_batch))
         return out
