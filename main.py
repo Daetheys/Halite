@@ -4,7 +4,7 @@ from nn import wings_model
 import time
 import tensorflow as tf
 
-tf.keras.backend.set_floatx('float64')
+tf.keras.backend.set_floatx('float32')
 
 mz,msh,msy = wings_model()
 vbm = VBM(mz,msh,msy)

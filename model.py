@@ -20,13 +20,25 @@ class VecBranchModel:
         
         return (lambda : self.out[index][out_ind])
 
+    def forward(self,inp0,inp1):
+        inp = tf.concat([inp0,inp1],axis=0)
+        if inp.shape[0] > 10000:
+            print("big flush",inp.shape[0])
+            mid = inp.shape[0]//2
+            out0A,out1A = self.forward(inp0[:mid],inp1[:max(mid-len(inp0),0)])
+            out0B,out1B = self.forward(inp0[mid:],inp1[max(mid-len(inp0),0):])
+            return tf.concat([out0A,out0B],axis=0),tf.concat([out1A,out1B],axis=0)
+        else:
+            outz = self.modelz(inp)
+            out0 = self.models[0](outz[:inp0.shape[0]])
+            out1 = self.models[1](outz[inp0.shape[0]:inp0.shape[0]+inp1.shape[0]])
+            return out0,out1
+
     def flush(self):
         inp0 = tf.concat(self.inp[0],axis=0)
         inp1 = tf.concat(self.inp[1],axis=0)
-        inp = tf.concat([inp0,inp1],axis=0)
-        outz = self.modelz(inp)
-        out0 = self.models[0](outz[:inp0.shape[0]])
-        out1 = self.models[1](outz[inp0.shape[0]:inp0.shape[0]+inp1.shape[0]])
+        out0,out1 = self.forward(inp0,inp1)
+        print("forwarded")
 
         self.out = [[],[]]
         offset = 0
@@ -42,7 +54,7 @@ class VecBranchModel:
 
     def reset(self):
         inp_shape = (0,*self.input_shape[1:])
-        self.inp = [[tf.zeros(inp_shape,dtype=tf.float64)],[tf.zeros(inp_shape,dtype=tf.float64)]]
+        self.inp = [[tf.zeros(inp_shape,dtype=tf.float32)],[tf.zeros(inp_shape,dtype=tf.float32)]]
         self.out = [[],[]]
 
     def parameters(self):

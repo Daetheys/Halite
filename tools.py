@@ -3,6 +3,7 @@ import copy
 from engine.player import ShipMove,ShipyardMove
 from engine.game import Game
 
+
 def get_nn_input(g):
     inp = np.zeros((21,21,9))
     halite = g.get_full_halite().reshape((21,21))
@@ -20,10 +21,10 @@ def get_nn_input(g):
         
     inp.reshape((1,21,21,9))
     
-    inp_sh0 = np.zeros((len(g.players[0].ships),21,21,9))
-    inp_sy0 = np.zeros((len(g.players[0].shipyards),21,21,9))
-    inp_sh1 = np.zeros((len(g.players[1].ships),21,21,9))
-    inp_sy1 = np.zeros((len(g.players[1].shipyards),21,21,9))
+    inp_sh0 = np.zeros((len(g.players[0].ships),21,21,9),dtype=np.float32)
+    inp_sy0 = np.zeros((len(g.players[0].shipyards),21,21,9),dtype=np.float32)
+    inp_sh1 = np.zeros((len(g.players[1].ships),21,21,9),dtype=np.float32)
+    inp_sy1 = np.zeros((len(g.players[1].shipyards),21,21,9),dtype=np.float32)
     
     for i,s in enumerate(g.players[0].ships):
         inp_sh0[i] = inp.copy()

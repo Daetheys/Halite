@@ -7,7 +7,7 @@ import tensorflow as tf
 import time
 np.set_printoptions(precision=15)
 
-EPS = 10**-3
+EPS = 10**-30
 
 class Env:
     def step(self,action):
@@ -34,7 +34,7 @@ class HaliteTrainer:
         self.batch_size = batch_size
         self.vbm = vbm
 
-        self.t_ratio = 3/100
+        self.t_ratio = 5/100
         self.explo_rate = 0.05
         
         self.reset()
@@ -146,8 +146,10 @@ class HaliteTrainer:
             self.reward_batch[t,i] = reward
 
         if t == self.game_length-1:
-            print("mean halite p0",np.mean([self.games[i].players[0].halite for i in range(len(self.games))]))
-            print("mean halite p1",np.mean([self.games[i].players[1].halite for i in range(len(self.games))]))
+            halite0 = [self.games[i].players[0].halite for i in range(len(self.games))]
+            halite1 = [self.games[i].players[1].halite for i in range(len(self.games))]
+            print("mean halite p0",np.mean(halite0),np.std(halite0))
+            print("mean halite p1",np.mean(halite1),np.std(halite1))
 
         self.vbm.reset()
 
@@ -168,7 +170,7 @@ class HaliteTrainer:
                         sh_proba2 = sh_proba
                         sy_proba2 = sy_proba
                         def prob():
-                            shp = tf.ones((1,),dtype=tf.float64)
+                            shp = tf.ones((1,),dtype=tf.float32)
                             if not(self.action_batch[t2,i2,2*k2] is None):
                                 sh_action_indexs = tf.convert_to_tensor(self.action_batch[t2,i2,2*k2]).numpy()
                                 indices = tf.range(len(sh_action_indexs),dtype=tf.int64)
@@ -177,7 +179,7 @@ class HaliteTrainer:
                                 #print("sh",t2,i2,k2,sh_proba2(),shp,sh_action_indexs,indexes)
                                 shp = sh_proba2()
                                 shp = tf.gather_nd(shp,indexes)
-                            syp = tf.ones((1,),dtype=tf.float64)
+                            syp = tf.ones((1,),dtype=tf.float32)
                             if not(self.action_batch[t2,i2,2*k2+1] is None):
                                 sy_action_indexs = tf.convert_to_tensor(self.action_batch[t2,i2,2*k2+1]).numpy()
                                 indices = tf.range(len(sy_action_indexs),dtype=tf.int64)
@@ -194,7 +196,7 @@ class HaliteTrainer:
         #Compute outcome
         reward = self.reward_batch.copy()
         gamma = 0.99
-        self.gt = np.zeros((self.game_length,self.batch_size),dtype=np.float64)
+        self.gt = np.zeros((self.game_length,self.batch_size),dtype=np.float32)
         self.gt[self.game_length-1] = reward[self.game_length-1]
         for t in range(self.game_length-1):
             self.gt[self.game_length-t-2] = self.gt[self.game_length-t-1]*gamma+reward[self.game_length-t-2]
@@ -205,18 +207,25 @@ class HaliteTrainer:
                 self.reduced_gt[t_ind][i] = self.gt[t,i]
 
     def loss(self):
+        print("pre flush")
         self.vbm.flush()
+        print("post flush")
         proba_move = [[ [None,None]  for _ in range(len(self.lambda_proba_move[i]))] for i in range(len(self.lambda_proba_move))]
         for t in range(self.minibatch_size):
             for i in range(self.batch_size):
                 for k in range(2):
                     proba_move[t][i][k] = self.lambda_proba_move[t][i][k]()
-        proba_move = tf.convert_to_tensor(proba_move)
-        #find_nan(proba_move)
-        #find_nan(self.reduced_gt)
-        print(tf.reduce_min(proba_move[:,:,0]))
-        loss0 = -tf.math.reduce_mean(proba_move[:,:,0]*tf.math.exp(self.reduced_gt))
-        loss1 = -tf.math.reduce_mean(proba_move[:,:,1]*tf.math.exp(-self.reduced_gt))
+        proba_move = tf.convert_to_tensor(proba_move,dtype=tf.float64)
+        proba_move = tf.clip_by_value(proba_move,EPS,1)
+        #loss0 = -tf.zeros((1,))
+        #for i in range(self.minibatch_size):
+        #    if self.reduced_gt[-1,i] < 0:
+        #        loss0 = loss0 + tf.clip_by_value(proba_move[:,i,0],EPS,1) ** self.reduced_gt[:,i]
+        #    else:
+        #        loss0 = loss0 + proba_move[:,i,0] ** self.reduced_gt[:,i]
+        #loss0 = tf.reduce_sum(loss0)
+        loss0 = -tf.math.reduce_mean(tf.math.log(proba_move[:,:,0])*self.reduced_gt)
+        loss1 = -tf.math.reduce_mean(proba_move[:,:,1]**(-self.reduced_gt))
         out = loss0#+loss1
         print("loss : ",loss0.numpy(),loss1.numpy(),np.sum(self.reward_batch))
         return out
