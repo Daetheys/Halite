@@ -15,9 +15,6 @@ class Player:
 
         init_ship = Ship(index*10+5,10,self)
         self.add_ship(init_ship)
-
-    def compute_actions(self):
-        return self.agent(self)
         
     def add_ship(self,ship):
         assert ship.root == self

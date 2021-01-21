@@ -13,6 +13,11 @@ class VecBranchModel:
 
         self.reset()
 
+    def save(self,prefix):
+        self.modelz.save("Models\\"+prefix+"-modelz.m")
+        self.models[0].save("Models\\"+prefix+"-model1.m")
+        self.models[1].save("Models\\"+prefix+"-model2.m")
+
     def request(self,inp,index):
         x = inp.shape[0]
         out_ind = len(self.inp[index])
@@ -38,7 +43,7 @@ class VecBranchModel:
         inp0 = tf.concat(self.inp[0],axis=0)
         inp1 = tf.concat(self.inp[1],axis=0)
         out0,out1 = self.forward(inp0,inp1)
-        print("forwarded")
+        #print("forwarded")
 
         self.out = [[],[]]
         offset = 0
@@ -54,7 +59,7 @@ class VecBranchModel:
 
     def reset(self):
         inp_shape = (0,*self.input_shape[1:])
-        self.inp = [[tf.zeros(inp_shape,dtype=tf.float32)],[tf.zeros(inp_shape,dtype=tf.float32)]]
+        self.inp = [[tf.zeros(inp_shape,dtype=tf.float64)],[tf.zeros(inp_shape,dtype=tf.float64)]]
         self.out = [[],[]]
 
     def parameters(self):

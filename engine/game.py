@@ -9,7 +9,7 @@ class Game:
         self.init_halite()
         self.players = [Player(0,agent1,self),Player(1,agent2,self)]
         self.nb_step = 0
-        self.length = 400
+        self.length = 10
 
     def copy(self):
         return copy.deepcopy(self)
@@ -26,9 +26,6 @@ class Game:
 
     def set_halite(self,x,y,v):
         self.halite[y,x] = v/self.halite_mult
-
-    def step(self):
-        self._step(self.players[0].compute_actions(),self.players[1].compute_actions())
 
     def _step(self,actions1,actions2):
         #Step 1 - Spawn
