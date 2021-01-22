@@ -47,8 +47,8 @@ class Shipyard:
         self.alive = True
 
     def spawn(self):
-        if self.root.halite >= 500:
-            self.root.halite -= 500
+        if self.root.halite >= self.root.root.spawn_cost:
+            self.root.halite -= self.root.root.spawn_cost
             ship = Ship(self.x,self.y,self.root)
             self.root.add_ship(ship)
 
@@ -89,9 +89,9 @@ class Ship:
             
     def convert(self):
         shipyard_b = self.root.root.players[0].shipyard_array[self.y][self.x] or self.root.root.players[1].shipyard_array[self.y][self.x]
-        if self.root.halite+self.halite >= 500 and not(shipyard_b):
+        if self.root.halite+self.halite >= self.root.root.convert_cost and not(shipyard_b):
             #Pay halite and add remaining positive / negative halite to the player
-            self.halite -= 500
+            self.halite -= self.root.root.convert_cost
             self.root.halite += self.halite
             #Remove ship
             self.remove()
@@ -105,9 +105,9 @@ class Ship:
         #Get harvested value of halite
         v = self.root.root.get_halite(self.x,self.y)
         #Remove it from halite array
-        self.root.root.set_halite(self.x,self.y,v*0.75)
+        self.root.root.set_halite(self.x,self.y,v*(1-self.root.root.halite_collect))
         #Add it to ship halite
-        self.halite += v*0.25
+        self.halite += v*self.root.root.halite_collect
             
 
 from enum import IntEnum

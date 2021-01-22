@@ -20,8 +20,8 @@ ship_move_actions = [ShipMove.LEFT,ShipMove.DOWN,ShipMove.RIGHT,ShipMove.UP]
 
 shipyard_actions = [ShipyardMove.HOLD,ShipyardMove.SPAWN]
 
-def build_halite():
-    starting_halite = 24000
+def build_halite(starting_halite):
+    #starting_halite = 24000
     
     randint = np.random.randint
     size = 21

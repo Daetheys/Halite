@@ -6,6 +6,12 @@ import copy
 
 class Game:
     def __init__(self,agent1,agent2):
+
+        self.spawn_cost = 500
+        self.convert_cost = 500
+        self.halite_init = 100000
+        self.halite_collect = 0.75
+
         self.init_halite()
         self.players = [Player(0,agent1,self),Player(1,agent2,self)]
         self.nb_step = 0
@@ -15,7 +21,7 @@ class Game:
         return copy.deepcopy(self)
         
     def init_halite(self):
-        self.halite = build_halite()
+        self.halite = build_halite(self.halite_init)
         self.halite_mult = 1
 
     def get_full_halite(self):
@@ -57,14 +63,15 @@ class Game:
         self.halite_regeneration()
         #Step 9 - End
         self.nb_step += 1
-        
+        """
         if self.nb_step == self.length:
             if self.players[0].halite > self.players[1].halite:
                 return 1
             elif self.players[0].halite < self.players[1].halite:
                 return -1
         return 0
-            
+        """
+        return self.players[0].halite - self.players[1].halite
 
     def halite_regeneration(self):
         self.halite_mult *= 1.02

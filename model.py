@@ -9,7 +9,7 @@ class VecBranchModel:
         self.modelz = modelz
         self.models = [model1,model2]
 
-        self.input_shape = modelz.input_shape
+        self.input_shape = (None,21,21,9)#modelz.input_shape
 
         self.reset()
 

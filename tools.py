@@ -2,6 +2,7 @@ import numpy as np
 import copy
 from engine.player import ShipMove,ShipyardMove
 from engine.game import Game
+from engine.tools import actions_dict
 
 
 def get_nn_input(g):
@@ -28,18 +29,18 @@ def get_nn_input(g):
     
     for i,s in enumerate(g.players[0].ships):
         inp_sh0[i] = inp.copy()
-        inp_sh0[i,s.y,s.x,7] = 1
+        inp_sh0[i,s.y,s.x,7] = 1*(g.nb_step+1)
     for i,s in enumerate(g.players[0].shipyards):
         inp_sy0[i] = inp.copy()
-        inp_sy0[i,s.y,s.x,8] = 1
+        inp_sy0[i,s.y,s.x,8] = 1*(g.nb_step+1)
         
     inp = inp[:,:,[0,4,5,6,1,2,3,7,8]]
     for i,s in enumerate(g.players[1].ships):
         inp_sh1[i] = inp.copy()
-        inp_sh1[i,s.y,s.x,7] = 1
+        inp_sh1[i,s.y,s.x,7] = 1*(g.nb_step+1)
     for i,s in enumerate(g.players[1].shipyards):
         inp_sy1[i] = inp.copy()
-        inp_sy1[i,s.y,s.x,8] = 1
+        inp_sy1[i,s.y,s.x,8] = 1*(g.nb_step+1)
     return inp_sh0,inp_sy0,inp_sh1,inp_sy1
 
 def choice(a,p):
@@ -68,3 +69,11 @@ def find_nan(a,block=True):
                     return 0
                 v[k+1] += 1
             
+def compute_action_dict(actions_list,p):
+    d = actions_dict()
+    (sh_actions,sy_actions) = actions_list
+    for i,sh in enumerate(p.ships):
+        d[sh_actions[i].numpy()].append(sh)
+    for i,sy in enumerate(p.shipyards):
+        d[sy_actions[i].numpy()].append(sy)
+    return d
