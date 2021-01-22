@@ -46,6 +46,10 @@ class RandomBot(Bot):
         self.explo_rate = 0 
 
     def compute_actions_proba(self,observation):
+        """ Observation is a (sh_input,sy_input) object with both array of shape 21x21x9.
+         0 : halite array // 1 : player ship position array // 2 : player ship halite array //
+          3 : player shipyard array // 4 : ennemy ship array // 5 ennemy ship halite array //
+          6 ennemy shipyard array // 7 : ship to action // 8 : shipyard to action """
         (sh_obs,sy_obs) = observation
         #Uniform proba for each move
         sh_proba = lambda : tf.ones((sh_obs.shape[0],6))/6
