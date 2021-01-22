@@ -46,7 +46,7 @@ class RandomBot(Bot):
         self.explo_rate = 0 
 
     def compute_actions_proba(self,observation):
-        """ Observation is a (sh_input,sy_input) object with both array of shape 21x21x9.
+        """ Observation is a (sh_input,sy_input) object with both array of shape Nx21x21x9.
          0 : halite array // 1 : player ship position array // 2 : player ship halite array //
           3 : player shipyard array // 4 : ennemy ship array // 5 ennemy ship halite array //
           6 ennemy shipyard array // 7 : ship to action // 8 : shipyard to action """
@@ -54,11 +54,13 @@ class RandomBot(Bot):
         #Uniform proba for each move
         sh_proba = lambda : tf.ones((sh_obs.shape[0],6))/6
         sy_proba = lambda : tf.ones((sy_obs.shape[0],2))/2
+        """ You need to return a N_shx6 array for ships with proba for each action for each ship 
+        and a N_syx2 for shipyard with proba for each action for each shipyard """
         return (sh_proba,sy_proba)
 
 def AdvancedCollectBot(Bot):
     def __init__(self):
-        targets = 
+        targets = 0
 
     def compute_actions_proba(self,observation):
         ships = 0
