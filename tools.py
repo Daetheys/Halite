@@ -42,10 +42,20 @@ def get_nn_input(g):
         inp_sy1[i] = inp.copy()
         inp_sy1[i,s.y,s.x,8] = 1
 
-    inp_sh0[:,:,:,9] = g.nb_step
-    inp_sy0[:,:,:,9] = g.nb_step
-    inp_sh1[:,:,:,9] = g.nb_step
-    inp_sy1[:,:,:,9] = g.nb_step
+    inp_sh0[:,0,0,9] = g.nb_step
+    inp_sy0[:,0,0,9] = g.nb_step
+    inp_sh1[:,0,0,9] = g.nb_step
+    inp_sy1[:,0,0,9] = g.nb_step
+
+    inp_sh0[:,1,0,9] = g.players[0].halite
+    inp_sy0[:,1,0,9] = g.players[0].halite
+    inp_sh1[:,1,0,9] = g.players[1].halite
+    inp_sy1[:,1,0,9] = g.players[1].halite
+
+    inp_sh0[:,0,1,9] = g.players[0].halite
+    inp_sy0[:,0,1,9] = g.players[0].halite
+    inp_sh1[:,0,1,9] = g.players[1].halite
+    inp_sy1[:,0,1,9] = g.players[1].halite
 
     return inp_sh0,inp_sy0,inp_sh1,inp_sy1
 
