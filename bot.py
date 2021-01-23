@@ -74,18 +74,19 @@ class ShyBot(Bot):
             return abs(xa-xb) + abs(ya-yb)
 
         no_turn = sh_obs[0,0,9]
-        sy_pos = self.position(sh_obs[:,:,3])
-        sh_pos = self.position(sh_obs[:,:,7])
+        sy_pos = position(sh_obs[:,:,3])
+        sh_pos = position(sh_obs[:,:,7])
         if sy_pos is None:
-            return (np.array([0,0,0,0,0.5,0.5]),None)
-        distance = distance(sy_pos,sh_pos)
-        spendable = (10 - no_turn - distance)//2
-        if spendable < 0:
+            return np.array([0,0,0,0,0.5,0.5])
+        d = distance(sy_pos,sh_pos)
+        spendable = 10 - no_turn
+        if spendable < d:
             return np.array([0,0,0,0,0,1])
         targets = sh_obs[:,:,0].copy()
         for x in range(9):
             for y in range(9):
-                targets[x,y] = max(distance((x,y),sh_pos) + distance((x,y),sy_pos) - spendable,0) * targets[x,y]
+                d = distance((x,y),sh_pos) + distance((x,y),sy_pos)
+                targets[x,y] = max(d - spendable,0) * targets[x,y]
         targets = (1 - sh_obs[:,:,1]) * targets
         target = position(targets)
         if sh_pos[0] > target[0]:
@@ -101,18 +102,22 @@ class ShyBot(Bot):
 
     def compute_actions_proba(self,observation):
         sh_obs,sy_obs = observation
-        if sh_obs is None and sy_obs is None:
-            assert(False)
-        no_turn = sy_obs[0][0,0,9] if sh_obs is None else sh_obs[0][0,0,9]
-        if no_turn == 0 :
-            return (np.array([0,0,0,0,1,0]),None)
+        nh,ny = sh_obs.shape[0],sy_obs.shape[0]
+        if nh == 0 and ny == 0:
+            return (lambda: np.zeros((0,6),type=float), lambda: np.zeros((0,6),type=float))
+        no_turn = sy_obs[0][0,0,9] if nh == 0 else sh_obs[0][0,0,9]
+        print(no_turn)
+        if no_turn <= 0 :
+            return (lambda: np.array([0,0,0,0,1,0]).astype(float).reshape(1,6),\
+                    lambda : np.zeros((0,2)).astype(float))
         else:
-            sh_actions, sy_actions = [], []
-            for ship in sh_obs:
-                sh_actions.append(self.ship_to_action(ship))
-            for shipyard in sy_obs:
-                sy_actions.append(np.array([0,1]))
-            return sh_actions,sy_actions
+            sh_actions, sy_actions = np.zeros((0,6)), np.zeros((0,2))
+            for i in range(nh):
+                np.vstack([sh_actions, self.ship_to_halite(sh_obs[i])])
+            for i in range(ny):
+                sy_actions = np.vstack([sy_actions, np.array([0,1])])
+            print(sh_actions, sy_actions)
+            return (lambda :sh_actions,lambda :sy_actions)
 
 
 def AdvancedCollectBot(Bot):
