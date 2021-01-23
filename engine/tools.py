@@ -24,9 +24,9 @@ def build_halite(starting_halite):
     #starting_halite = 24000
     
     randint = np.random.randint
-    size = 21
+    size = 9
      # Distribute Halite evenly into quartiles.
-    half = int(np.ceil(21/2))
+    half = int(np.ceil(size/2))
     grid = [[0] * half for _ in range(half)]
 
     # Randomly place a few halite "seeds".
@@ -75,4 +75,4 @@ def build_halite(starting_halite):
             halite[size * r + (size - c - 1)] = val
             halite[size * (size - 1) - (size * r) + c] = val
             halite[size * (size - 1) - (size * r) + (size - c - 1)] = val
-    return np.reshape(halite,(21,21))
+    return np.reshape(halite,(size,size))

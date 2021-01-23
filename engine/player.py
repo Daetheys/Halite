@@ -1,3 +1,5 @@
+
+SHAPE = (9,9)
 class Player:
     def __init__(self,index,agent,root):
         self.root = root
@@ -6,14 +8,14 @@ class Player:
         self.agent = agent
         
         self.ships = []
-        self.ship_array = [[[] for _ in range(21)] for _ in range(21)]
+        self.ship_array = [[[] for _ in range(SHAPE[1])] for _ in range(SHAPE[0])]
 
         self.shipyards = []
-        self.shipyard_array = [[0 for _ in range(21)] for _ in range(21)]
+        self.shipyard_array = [[0 for _ in range(SHAPE[1])] for _ in range(SHAPE[0])]
 
         self.halite = 5000
 
-        init_ship = Ship(index*10+5,10,self)
+        init_ship = Ship(index*2+4,5,self)
         self.add_ship(init_ship)
         
     def add_ship(self,ship):
@@ -75,13 +77,13 @@ class Ship:
     def move(self,m):
         self.root.ship_array[self.y][self.x].remove(self)
         if m == ShipMove.LEFT:
-            self.x = (self.x-1)%21
+            self.x = (self.x-1)%SHAPE[0]
         elif m == ShipMove.DOWN:
-            self.y = (self.y+1)%21
+            self.y = (self.y+1)%SHAPE[0]
         elif m == ShipMove.RIGHT:
-            self.x = (self.x+1)%21
+            self.x = (self.x+1)%SHAPE[1]
         elif m == ShipMove.UP:
-            self.y = (self.y-1)%21
+            self.y = (self.y-1)%SHAPE[1]
         else:
             print(m,m.__class__)
             assert False #unknown move

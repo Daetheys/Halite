@@ -3,13 +3,14 @@ import time
 import numpy as np
 
 MAXBATCHSIZE = 20000
+SIZE = 9
 
 class VecBranchModel:
     def __init__(self,modelz,model1,model2):
         self.modelz = modelz
         self.models = [model1,model2]
 
-        self.input_shape = (None,21,21,10)#modelz.input_shape
+        self.input_shape = (None,SIZE,SIZE,10)#modelz.input_shape
 
         self.reset()
 

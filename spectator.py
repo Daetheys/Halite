@@ -14,7 +14,7 @@ class EmptyVBM:
     def reset(self):
         pass
 
-bot1 = RLBot(vbm,0)
+bot1 = RandomBot(1)#RLBot(vbm,0)
 bot2 = RandomBot(1)
 
 viewer = Viewer(bot1,bot2,vbm)

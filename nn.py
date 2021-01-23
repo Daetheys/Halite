@@ -138,7 +138,7 @@ def parallel_model():
 
 def dense_model():
     activation = 'relu'
-    inp = Input(shape=(21,21,10))
+    inp = Input(shape=(9,9,10))
     x = inp
     x = Flatten()(x)
     x = Dense(32,activation=activation)(x)
