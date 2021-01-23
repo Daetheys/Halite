@@ -106,16 +106,16 @@ class ShyBot(Bot):
         if nh == 0 and ny == 0:
             return (lambda: np.zeros((0,6),type=float), lambda: np.zeros((0,6),type=float))
         no_turn = sy_obs[0][0,0,9] if nh == 0 else sh_obs[0][0,0,9]
-        print(no_turn)
+        print(no_turn,nh,ny)
         if no_turn <= 0 :
             return (lambda: np.array([0,0,0,0,1,0]).astype(float).reshape(1,6),\
                     lambda : np.zeros((0,2)).astype(float))
         else:
             sh_actions, sy_actions = np.zeros((0,6)), np.zeros((0,2))
             for i in range(nh):
-                np.vstack([sh_actions, self.ship_to_halite(sh_obs[i])])
+                sh_actions = np.vstack([sh_actions, self.ship_to_halite(sh_obs[i])])
             for i in range(ny):
-                sy_actions = np.vstack([sy_actions, np.array([0,1])])
+                sy_actions = np.vstack([sy_actions, np.array([1,0])])
             print(sh_actions, sy_actions)
             return (lambda :sh_actions,lambda :sy_actions)
 
