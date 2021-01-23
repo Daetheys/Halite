@@ -126,9 +126,9 @@ class LearnerBot(Bot):
     def __init__(self,model,id):
         super().__init__(id,)
         self.model = model
+        self.batch_size = 7
         self.reset()
         self.reset_batch()
-        self.batch_size = 10
 
     def reset_batch(self):
         self.obs_batch = [[] for i in range(self.batch_size)]

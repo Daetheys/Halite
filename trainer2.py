@@ -140,7 +140,7 @@ class HaliteTrainer:
         assert not(tf.math.is_nan(l))
         return l
             
-    def fit(self,nb_epochs=4):
+    def fit(self,nb_epochs=7):
         opt = tf.keras.optimizers.Adam(10**-3) #Reset Adam momentums between fits
         for _ in range(nb_epochs):
             #with tf.GradientTape() as tape:

@@ -144,7 +144,7 @@ def dense_model():
     x = Dense(64,activation=activation)(x)
     mz = tf.keras.Model(inputs=inp,outputs=x)
     for w in mz.weights:
-        w.assign(w/10)
+        w.assign(w/100)
 
     x0 = x
 
@@ -154,7 +154,7 @@ def dense_model():
     x = Dense(6,activation='softmax')(x)
     msh = tf.keras.Model(inputs=inpsh,outputs=x)
     for w in msh.weights:
-        w.assign(w/10)
+        w.assign(w/100)
 
     inpsy = Input(shape=x0.shape[1:])
     x = inpsy
@@ -162,6 +162,6 @@ def dense_model():
     x = Dense(2,activation='softmax')(x)
     msy = tf.keras.Model(inputs=inpsy,outputs=x)
     for w in msy.weights:
-        w.assign(w/10)
+        w.assign(w/100)
 
     return mz,msh,msy
