@@ -6,7 +6,7 @@ from engine.tools import actions_dict
 
 
 def get_nn_input(g):
-    inp = np.zeros((21,21,9))
+    inp = np.zeros((21,21,10))
     halite = g.get_full_halite().reshape((21,21))
     inp[:,:,0] = halite
     for sh in g.players[0].ships:
@@ -20,12 +20,12 @@ def get_nn_input(g):
     for sy in g.players[1].shipyards:
         inp[sy.y,sy.x,6] = 1
         
-    inp.reshape((1,21,21,9))
+    inp.reshape((1,21,21,10))
     
-    inp_sh0 = np.zeros((len(g.players[0].ships),21,21,9),dtype=np.float32)
-    inp_sy0 = np.zeros((len(g.players[0].shipyards),21,21,9),dtype=np.float32)
-    inp_sh1 = np.zeros((len(g.players[1].ships),21,21,9),dtype=np.float32)
-    inp_sy1 = np.zeros((len(g.players[1].shipyards),21,21,9),dtype=np.float32)
+    inp_sh0 = np.zeros((len(g.players[0].ships),21,21,10),dtype=np.float32)
+    inp_sy0 = np.zeros((len(g.players[0].shipyards),21,21,10),dtype=np.float32)
+    inp_sh1 = np.zeros((len(g.players[1].ships),21,21,10),dtype=np.float32)
+    inp_sy1 = np.zeros((len(g.players[1].shipyards),21,21,10),dtype=np.float32)
     
     for i,s in enumerate(g.players[0].ships):
         inp_sh0[i] = inp.copy()
@@ -34,13 +34,19 @@ def get_nn_input(g):
         inp_sy0[i] = inp.copy()
         inp_sy0[i,s.y,s.x,8] = 1*(g.nb_step+1)
         
-    inp = inp[:,:,[0,4,5,6,1,2,3,7,8]]
+    inp = inp[:,:,[0,4,5,6,1,2,3,7,8,9]]
     for i,s in enumerate(g.players[1].ships):
         inp_sh1[i] = inp.copy()
-        inp_sh1[i,s.y,s.x,7] = 1*(g.nb_step+1)
+        inp_sh1[i,s.y,s.x,7] = 1
     for i,s in enumerate(g.players[1].shipyards):
         inp_sy1[i] = inp.copy()
-        inp_sy1[i,s.y,s.x,8] = 1*(g.nb_step+1)
+        inp_sy1[i,s.y,s.x,8] = 1
+
+    inp_sh0[:,:,:,9] = g.nb_step
+    inp_sy0[:,:,:,9] = g.nb_step
+    inp_sh1[:,:,:,9] = g.nb_step
+    inp_sy1[:,:,:,9] = g.nb_step
+
     return inp_sh0,inp_sy0,inp_sh1,inp_sy1
 
 def choice(a,p):

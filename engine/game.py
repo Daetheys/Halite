@@ -71,7 +71,7 @@ class Game:
                 return -1
         return 0
         """
-        return self.players[0].halite - self.players[1].halite
+        return (self.players[0].halite - self.players[1].halite)/1000
 
     def halite_regeneration(self):
         self.halite_mult *= 1.02

@@ -5,6 +5,7 @@ from tools import *
 import numpy as np
 import tensorflow as tf
 import time
+from bot import LearnerBot
 np.set_printoptions(precision=15)
 
 EPS = 10**-30
@@ -39,9 +40,11 @@ class HaliteTrainer:
 
         self.gamma = 0.99
 
-        self.bots = [(bot1(),bot2()) for _ in range(self.batch_size)]
+        self.bots = [(bot1(2*i),bot2(2*i+1)) for i in range(self.batch_size)]
         
         self.reset()
+
+        self.halite_list = []
 
     def save(self):
         self.vbm.save()
@@ -66,10 +69,11 @@ class HaliteTrainer:
                 self.step()
             self.fit()
             for g in self.games:
-                g.players[0].agent.explo_rate *= 0.98
-                g.players[1].agent.explo_rate *= 0.98
+                g.players[0].agent.explo_rate = 1/(n+1)
+                g.players[1].agent.explo_rate = 1/(n+1)
             self.reset()
             self.save(prefix)
+        print(self.halite_list)
 
     def step(self):
         
@@ -101,6 +105,11 @@ class HaliteTrainer:
             reward = g._step(actions0,actions1)
             #Store reward
             self.rewards[i] = reward
+        self.rewards = (self.rewards-self.rewards.mean())/self.rewards.std()
+        for i,g in enumerate(self.games):
+            g.players[0].agent.add_reward(self.rewards[i])
+            if isinstance(g.players[1].agent,LearnerBot):
+                g.players[1].agent.add_reward(-self.rewards[i])
 
         #End game
         if t == self.game_length-1:
@@ -108,6 +117,9 @@ class HaliteTrainer:
             halite1 = [self.games[i].players[1].halite for i in range(len(self.games))]
             print("mean halite p0",np.mean(halite0),np.std(halite0),np.max(halite0),np.min(halite0))
             print("mean halite p1",np.mean(halite1),np.std(halite1),np.max(halite1),np.min(halite1))
+            self.halite_list.append(np.mean(halite0))
+            #Normalize rewards
+            
 
         self.vbm.reset()
 
@@ -115,18 +127,22 @@ class HaliteTrainer:
         self.vbm.reset()
         for g in self.games:
             g.players[0].agent.loss_precompute()
+            if isinstance(g.players[1].agent,LearnerBot):
+                g.players[1].agent.loss_precompute()
         self.vbm.flush()
         l = tf.reduce_mean([g.players[0].agent.loss_compute(self.rewards[i]) for i,g in enumerate(self.games)])
-        print("loss : ",l.numpy(),np.unique(np.sign(self.rewards),return_counts=True))
+        if isinstance(self.bots[0][1],LearnerBot):
+            l += tf.reduce_mean([g.players[1].agent.loss_compute(-self.rewards[i]) for i,g in enumerate(self.games)])
+        print("-----------------loss : ",l.numpy())
         assert not(tf.math.is_nan(l))
         return l
             
-    def fit(self,nb_epochs=3):
+    def fit(self,nb_epochs=7):
         opt = tf.keras.optimizers.Adam(10**-3) #Reset Adam momentums between fits
         for _ in range(nb_epochs):
-            with tf.GradientTape() as tape:
-                loss = self.loss()
-                grad = tape.gradient(loss,self.vbm.parameters())
-                grad_clipped = [tf.clip_by_value(g,-10**-3,10**-3) for g in grad]
-            opt.apply_gradients(zip(grad_clipped,self.vbm.parameters()))
-            #opt.minimize(self.loss,self.vbm.parameters())
+            #with tf.GradientTape() as tape:
+            #    loss = self.loss()
+            #    grad = tape.gradient(loss,self.vbm.parameters())
+            #    grad_clipped = [tf.clip_by_value(g,-10**-2,10**-2) for g in grad]
+            #opt.apply_gradients(zip(grad_clipped,self.vbm.parameters()))
+            opt.minimize(self.loss,self.vbm.parameters())
