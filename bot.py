@@ -59,6 +59,62 @@ class RandomBot(Bot):
         and a N_syx2 for shipyard with proba for each action for each shipyard """
         return (sh_proba,sy_proba)
 
+def ShyBot(Bot):
+    def __init__(self,id):
+        super().__init__(id)
+
+    def ship_to_halite(self,sh_obs):
+        def position(X):
+            if np.sum(X) == 0:
+                return None
+            return np.unravel_index(X.argmax(),X.shape)
+        def distance(a,b):
+            xa,ya = a
+            xb,yb = b
+            return abs(xa-xb) + abs(ya-yb)
+
+        no_turn = sh_obs[0,0,9]
+        sy_pos = self.position(sh_obs[:,:,3])
+        sh_pos = self.position(sh_obs[:,:,7])
+        if sy_pos is None:
+            return (np.array([0,0,0,0,0.5,0.5]),None)
+        distance = distance(sy_pos,sh_pos)
+        spendable = (10 - no_turn - distance)//2
+        if spendable < 0:
+            return np.array([0,0,0,0,0,1])
+        targets = sh_obs[:,:,0].copy()
+        for x in range(9):
+            for y in range(9):
+                targets[x,y] = max(distance((x,y),sh_pos) + distance((x,y),sy_pos) - spendable,0) * targets[x,y]
+        targets = (1 - sh_obs[:,:,1]) * targets
+        target = position(targets)
+        if sh_pos[0] > target[0]:
+            return np.array([1,0,0,0,0,0])
+        elif sh_pos[0] < target[0]:
+            return np.array([0,0,1,0,0,0])
+        elif sh_pos[1] > target[1]:
+            return np.array([0,1,0,0,0,0])
+        elif sh_pos[1] < target[1]:
+            return np.array([0,0,0,1,0,0])
+        return np.array([0,0,0,0,0,1])
+
+
+    def compute_actions_proba(self,observation):
+        sh_obs,sy_obs = observation
+        if sh_obs is None and sy_obs is None:
+            assert(False)
+        no_turn = sy_obs[0][0,0,9] if sh_obs is None else sh_obs[0][0,0,9]
+        if no_turn == 0 :
+            return (np.array([0,0,0,0,1,0]),None)
+        else:
+            sh_actions, sy_actions = [], []
+            for ship in sh_obs:
+                sh_actions.append(self.ship_to_action(ship))
+            for shipyard in sy_obs:
+                sy_actions.append(np.array([0,1]))
+            return sh_actions,sy_actions
+
+
 def AdvancedCollectBot(Bot):
     def __init__(self):
         targets = 0
