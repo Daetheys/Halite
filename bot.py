@@ -59,7 +59,7 @@ class RandomBot(Bot):
         and a N_syx2 for shipyard with proba for each action for each shipyard """
         return (sh_proba,sy_proba)
 
-def ShyBot(Bot):
+class ShyBot(Bot):
     def __init__(self,id):
         super().__init__(id)
 

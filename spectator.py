@@ -17,5 +17,5 @@ class EmptyVBM:
 bot1 = ShyBot(1)#RLBot(vbm,0)
 bot2 = RandomBot(1)
 
-viewer = Viewer(bot1,bot2,EmptyVBM)
+viewer = Viewer(bot1,bot2,EmptyVBM())
 viewer.play()
