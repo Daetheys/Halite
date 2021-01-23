@@ -141,7 +141,7 @@ def dense_model():
     inp = Input(shape=(9,9,10))
     x = inp
     x = Flatten()(x)
-    x = Dense(32,activation=activation)(x)
+    x = Dense(64,activation=activation)(x)
     mz = tf.keras.Model(inputs=inp,outputs=x)
     for w in mz.weights:
         w.assign(w/10)
@@ -150,7 +150,7 @@ def dense_model():
 
     inpsh = Input(shape=x0.shape[1:])
     x = inpsh
-    x = Dense(32,activation=activation)(x)
+    x = Dense(64,activation=activation)(x)
     x = Dense(6,activation='softmax')(x)
     msh = tf.keras.Model(inputs=inpsh,outputs=x)
     for w in msh.weights:
@@ -158,7 +158,7 @@ def dense_model():
 
     inpsy = Input(shape=x0.shape[1:])
     x = inpsy
-    x = Dense(32,activation=activation)(x)
+    x = Dense(64,activation=activation)(x)
     x = Dense(2,activation='softmax')(x)
     msy = tf.keras.Model(inputs=inpsy,outputs=x)
     for w in msy.weights:

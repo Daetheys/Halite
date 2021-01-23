@@ -69,6 +69,9 @@ class HaliteTrainer:
                 self.step()
             self.fit()
             for g in self.games:
+                g.players[0].agent.next_batch()
+                if isinstance(g.players[1].agent,LearnerBot):
+                    g.players[1].agent.next_batch()
                 g.players[0].agent.explo_rate = 1/(n+1)
                 g.players[1].agent.explo_rate = 1/(n+1)
             self.reset()
@@ -106,10 +109,6 @@ class HaliteTrainer:
             #Store reward
             self.rewards[i] = reward
         self.rewards = (self.rewards-self.rewards.mean())/self.rewards.std()
-        for i,g in enumerate(self.games):
-            g.players[0].agent.add_reward(self.rewards[i])
-            if isinstance(g.players[1].agent,LearnerBot):
-                g.players[1].agent.add_reward(-self.rewards[i])
 
         #End game
         if t == self.game_length-1:
@@ -119,6 +118,10 @@ class HaliteTrainer:
             print("mean halite p1",np.mean(halite1),np.std(halite1),np.max(halite1),np.min(halite1))
             self.halite_list.append(np.mean(halite0))
             #Normalize rewards
+            for i,g in enumerate(self.games):
+                g.players[0].agent.add_reward(self.rewards[i])
+                if isinstance(g.players[1].agent,LearnerBot):
+                    g.players[1].agent.add_reward(-self.rewards[i])
             
 
         self.vbm.reset()
@@ -130,14 +133,14 @@ class HaliteTrainer:
             if isinstance(g.players[1].agent,LearnerBot):
                 g.players[1].agent.loss_precompute()
         self.vbm.flush()
-        l = tf.reduce_mean([g.players[0].agent.loss_compute(self.rewards[i]) for i,g in enumerate(self.games)])
+        l = tf.reduce_mean([g.players[0].agent.loss_compute() for i,g in enumerate(self.games)])
         if isinstance(self.bots[0][1],LearnerBot):
-            l += tf.reduce_mean([g.players[1].agent.loss_compute(-self.rewards[i]) for i,g in enumerate(self.games)])
+            l += tf.reduce_mean([g.players[1].agent.loss_compute() for i,g in enumerate(self.games)])
         print("-----------------loss : ",l.numpy())
         assert not(tf.math.is_nan(l))
         return l
             
-    def fit(self,nb_epochs=7):
+    def fit(self,nb_epochs=3):
         opt = tf.keras.optimizers.Adam(10**-3) #Reset Adam momentums between fits
         for _ in range(nb_epochs):
             #with tf.GradientTape() as tape:
