@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
-EPS = 10**-120
+EPS = 10**-3
 
 class Bot:
     def __init__(self,id):
@@ -131,7 +131,7 @@ class LearnerBot(Bot):
     def __init__(self,model,id):
         super().__init__(id,)
         self.model = model
-        self.batch_size = 7
+        self.batch_size = 5
         self.reset()
         self.reset_batch()
 
@@ -246,7 +246,7 @@ class RLBot(LearnerBot):
                 reinforce_loss = -self.reward_batch[b]*(self.gamma**(length-t))*log_proba_played
                 #Add crossentropy term
                 entropy_loss = -tf.reduce_sum(tf.math.log(sh_probas)) - tf.reduce_sum(tf.math.log(sy_probas))
-                entropy_loss *= 0.06
+                entropy_loss *= 0.02
                 #if t%5==0 and self.id==0:
                 #    print('r',reinforce_loss.numpy())
                 #    print('e',entropy_loss.numpy())
@@ -276,42 +276,63 @@ class RLBot(LearnerBot):
         self.vbm.flush()
         action = self.sample_actions(proba)
         return action
-
-class RLExploratorBot(RLBot):
+class ExploratorRLBot(RLBot):
     def __init__(self,vbm,id):
         super().__init__(vbm,id)
-        self.explo_rate = 0.2
-
-    def loss_compute(self,reward):
+    def loss_compute(self):
         l = 0.
         length = len(self.probas_wrapper)
-        for t,p in enumerate(self.probas_wrapper):
-            #Get proba for each possible move for each ship.shipyard
-            (sh_probas,sy_probas) = (p[0](),p[1]())
-            #Get chosen actions
-            (sh_actions,sy_actions) = self.action_batch[t]
-            if t %5 == 0 and self.id==0:
-                print(tf.reduce_min(sh_probas).numpy(),tf.reduce_max(sh_probas).numpy(),tf.reduce_min(sy_probas).numpy(),tf.reduce_max(sy_probas).numpy())
-            #Compute log proba of chosen actions
-            log_proba_played = 0.
-            for i,sh_action in enumerate(sh_actions):
-                action_proba = sh_probas[i,sh_action]
-                if action_proba > 0:
-                    log_proba_played += tf.math.log(action_proba)
-                else:
-                    log_proba_played += tf.math.log(action_proba+EPS)
-            for i,sy_action in enumerate(sy_actions):
-                action_proba = sy_probas[i,sy_action]
-                if action_proba > 0:
-                    log_proba_played += tf.math.log(action_proba)
-                else:
-                    log_proba_played += tf.math.log(action_proba+EPS)
-            #Add with reward and gamma factor
-            reinforce_loss = -reward*tf.cast(reward>0,tf.float64)*(self.gamma**(length-t))*log_proba_played
-            reinforce_loss *= 100 #Explorator bonus
-            #Add crossentropy term
-            entropy_loss = -tf.reduce_sum(tf.math.log(sh_probas)) - tf.reduce_sum(tf.math.log(sy_probas))
-            entropy_loss *= 0.1
-            #Add to loss
-            l += reinforce_loss + entropy_loss
+        for b,bpw in enumerate(self.probas_wrapper):
+            for t,p in enumerate(bpw):
+                #Get proba for each possible move for each ship.shipyard
+                (sh_probas,sy_probas) = (p[0](),p[1]())
+                sh_probas = sh_probas*(1-EPS)+EPS
+                sy_probas = sy_probas*(1-EPS)+EPS
+                #Get chosen actions
+                (sh_actions,sy_actions) = self.action_batch[b][t]
+                #if t==0 and self.id==0:
+                #    print(self.obs_batch[0][0][0][0,0,0,0])
+                #    print(self.action_batch[0][0][0][0])
+                #    print(self.reward_batch)
+                if t %5 == 0 and self.id==0:
+                    sh_min = tf.reduce_min(sh_probas).numpy()
+                    sh_min_idx = np.where(sh_probas==sh_min)[1]
+                    sh_max = tf.reduce_max(sh_probas).numpy()
+                    sh_max_idx = np.where(sh_probas==sh_max)[1]
+                    sy_min = tf.reduce_min(sy_probas).numpy()
+                    sy_min_idx = np.where(sy_probas==sy_min)[1]
+                    sy_max = tf.reduce_max(sy_probas).numpy()
+                    sy_max_idx = np.where(sy_probas==sy_max)[1]
+                    print(sh_min,sh_min_idx,sh_max,sh_max_idx,sy_min,sy_min_idx,sy_max,sy_max_idx)
+                #Compute log proba of chosen actions
+                log_proba_played = 0.
+                for i,sh_action in enumerate(sh_actions):
+                    action_proba = sh_probas[i,sh_action]
+                    if action_proba > 0:
+                        log_proba_played += tf.math.log(action_proba)
+                    else:
+                        log_proba_played += tf.math.log(action_proba+EPS)
+                for i,sy_action in enumerate(sy_actions):
+                    action_proba = sy_probas[i,sy_action]
+                    if action_proba > 0:
+                        log_proba_played += tf.math.log(action_proba)
+                    else:
+                        log_proba_played += tf.math.log(action_proba+EPS)
+                #Add with reward and gamma factor
+                reinforce_loss = 0
+                if self.reward_batch[b]>0:
+                    reinforce_loss += -self.reward_batch[b]*(self.gamma**(length-t))*log_proba_played
+                reinforce_loss *= 100
+                #Add crossentropy term
+                entropy_loss = -tf.reduce_sum(tf.math.log(sh_probas)) - tf.reduce_sum(tf.math.log(sy_probas))
+                entropy_loss *= 0.02
+                #if t%5==0 and self.id==0:
+                #    print('r',reinforce_loss.numpy())
+                #    print('e',entropy_loss.numpy())
+                #print("entropy",entropy_loss)
+                #print("reinforce",reinforce_loss)
+                #Lasso loss
+                #lasso_loss = tf.reduce_mean([tf.reduce_mean(tf.math.abs(w)) for w in self.model.parameters()])
+                #Add to loss
+                l += reinforce_loss + entropy_loss #+ lasso_loss
         return l

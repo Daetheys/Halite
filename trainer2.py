@@ -63,6 +63,16 @@ class HaliteTrainer:
         self.vbm.save(prefix)
 
     def learn(self,nb,prefix):
+        #Full batches
+        for b in range(self.bots[0][0].batch_size-1):
+            for i in range(self.game_length):
+                self.step()
+            for g in self.games:
+                g.players[0].agent.next_batch()
+                if isinstance(g.players[1].agent,LearnerBot):
+                    g.players[1].agent.next_batch()
+            self.reset()
+        #Train
         for n in range(nb):
             print(n)
             for i in range(self.game_length):
@@ -72,8 +82,8 @@ class HaliteTrainer:
                 g.players[0].agent.next_batch()
                 if isinstance(g.players[1].agent,LearnerBot):
                     g.players[1].agent.next_batch()
-                g.players[0].agent.explo_rate = 0.5/(n+1)
-                g.players[1].agent.explo_rate = 0.5/(n+1)
+                g.players[0].agent.explo_rate = 0.5/(n+5)
+                g.players[1].agent.explo_rate = 0.5/(n+5)
             self.reset()
             self.save(prefix)
         print(self.halite_list)
@@ -108,7 +118,7 @@ class HaliteTrainer:
             reward = g._step(actions0,actions1)
             #Store reward
             self.rewards[i] = reward
-        self.rewards = (self.rewards-self.rewards.mean())/self.rewards.std()
+        #self.rewards = (self.rewards-self.rewards.mean())/self.rewards.std()
 
         #End game
         if t == self.game_length-1:
@@ -140,8 +150,8 @@ class HaliteTrainer:
         assert not(tf.math.is_nan(l))
         return l
             
-    def fit(self,nb_epochs=7):
-        opt = tf.keras.optimizers.Adam(10**-3) #Reset Adam momentums between fits
+    def fit(self,nb_epochs=2):
+        opt = tf.keras.optimizers.Adam(10**-4) #Reset Adam momentums between fits
         for _ in range(nb_epochs):
             #with tf.GradientTape() as tape:
             #    loss = self.loss()
