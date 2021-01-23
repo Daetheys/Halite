@@ -72,8 +72,8 @@ class HaliteTrainer:
                 g.players[0].agent.next_batch()
                 if isinstance(g.players[1].agent,LearnerBot):
                     g.players[1].agent.next_batch()
-                g.players[0].agent.explo_rate = 1/(n+1)
-                g.players[1].agent.explo_rate = 1/(n+1)
+                g.players[0].agent.explo_rate = 0.5/(n+1)
+                g.players[1].agent.explo_rate = 0.5/(n+1)
             self.reset()
             self.save(prefix)
         print(self.halite_list)
@@ -140,7 +140,7 @@ class HaliteTrainer:
         assert not(tf.math.is_nan(l))
         return l
             
-    def fit(self,nb_epochs=3):
+    def fit(self,nb_epochs=4):
         opt = tf.keras.optimizers.Adam(10**-3) #Reset Adam momentums between fits
         for _ in range(nb_epochs):
             #with tf.GradientTape() as tape:

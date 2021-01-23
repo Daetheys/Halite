@@ -128,21 +128,22 @@ class LearnerBot(Bot):
         self.model = model
         self.reset()
         self.reset_batch()
+        self.batch_size = 10
 
     def reset_batch(self):
-        self.obs_batch = [[] for i in range(5)]
-        self.action_batch = [[] for i in range(5)]
+        self.obs_batch = [[] for i in range(self.batch_size)]
+        self.action_batch = [[] for i in range(self.batch_size)]
         self.batch_index = 0
 
     def next_batch(self):
         #Go to next batch
-        self.batch_index = (self.batch_index+1)%5
+        self.batch_index = (self.batch_index+1)%self.batch_size
         #Free the batch
         self.obs_batch[self.batch_index] = []
         self.action_batch[self.batch_index] = []
 
     def add_batch(self,o,batch):
-        assert len(batch) == 5
+        assert len(batch) == self.batch_size
         batch[self.batch_index].append(o)
         assert len(batch[self.batch_index])<=10
 
@@ -183,15 +184,15 @@ class RLBot(LearnerBot):
         self.explo_rate = 1
         self.gamma = 1
         
-        self.reward_batch = [0 for i in range(5)]
+        self.reward_batch = [0 for i in range(self.batch_size)]
         self.index_reward = 0
 
     def add_reward(self,reward):
         self.reward_batch[self.index_reward]= reward
-        self.index_reward = (self.index_reward+1)%5
+        self.index_reward = (self.index_reward+1)%self.batch_size
 
     def loss_precompute(self):
-        self.probas_wrapper = [[] for i in range(5)]
+        self.probas_wrapper = [[] for i in range(self.batch_size)]
         for i,bo in enumerate(self.obs_batch):
             for o in bo:
                 proba = self.compute_actions_proba(o,store_batch=False)
@@ -240,7 +241,7 @@ class RLBot(LearnerBot):
                 reinforce_loss = -self.reward_batch[b]*(self.gamma**(length-t))*log_proba_played
                 #Add crossentropy term
                 entropy_loss = -tf.reduce_sum(tf.math.log(sh_probas)) - tf.reduce_sum(tf.math.log(sy_probas))
-                entropy_loss *= 0.05
+                entropy_loss *= 0.06
                 #if t%5==0 and self.id==0:
                 #    print('r',reinforce_loss.numpy())
                 #    print('e',entropy_loss.numpy())
