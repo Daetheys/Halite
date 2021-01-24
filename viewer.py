@@ -30,7 +30,7 @@ class Viewer:
         for i in range(7):
             plt.subplot(self.game.length+1,7,self.game.nb_step*7+i+1)
             if i == 0:
-                plt.text(-70, 2,str(self.game.players[0].halite)[:4]+"-"+str(self.game.players[1].halite)[:4], fontsize = 10, color = 'black')#, backgroundcolor = 'white')
+                plt.text(-10, 2,str(self.game.players[0].halite)[:4]+"-"+str(self.game.players[1].halite)[:4], fontsize = 10, color = 'black')#, backgroundcolor = 'white')
             plt.imshow(inp[:,:,i])
             plt.xticks([])
             plt.yticks([])

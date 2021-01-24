@@ -75,15 +75,14 @@ def parallel_max_pool(x):
 
 def parallel_model():
     activation = 'relu'
-    inp = Input(shape=(21,21,9))
-    x = inp
-    xa = Conv2D(8,(3,3),padding='same')(x)
-    x1b = parallel_conv([x[:,:,:,i:i+1] for i in range(x.shape[-1])],2,'conv')
+    inp = Input(shape=(9,9,10))
+    metadata = inp[:,:,:,9]
+    x = inp[:,:,:,:9]
+    xa = Conv2D(64,(3,3),padding='same')(x)
+    x1b = parallel_conv([x[:,:,:,i:i+1] for i in range(x.shape[-1])],8,'conv')
     x = tf.concat([xa,*x1b],axis=-1)
-    x = MaxPool2D((2,2))(x)
-    x1b = parallel_max_pool(x1b)
-    xa = Conv2D(8,(3,3),padding='same',activation=activation)(x)
-    x11b = parallel_conv(x1b,2,'conv',activation=activation)
+    xa = Conv2D(64,(3,3),padding='same',activation=activation)(x)
+    x11b = parallel_conv(x1b,8,'conv',activation=activation)
     x = tf.concat([xa,*x11b],axis=-1)
     x = MaxPool2D((2,2))(x)
     #x11b = parallel_max_pool(x11b)
@@ -107,6 +106,8 @@ def parallel_model():
     x33b = parallel_max_pool(x33b)
     """
     x = Flatten()(x)
+    fmetadata = Flatten()(metadata)
+    x = tf.concat([x,fmetadata],axis=1)
     x0 = x
 
     mz = tf.keras.Model(inputs=inp,outputs=x)
@@ -116,7 +117,7 @@ def parallel_model():
     #Sh Model
     inpsh = Input(shape=x0.shape[1:])
     x = inpsh
-    x = Dense(32,activation=activation)(x)
+    x = Dense(64,activation=activation)(x)
     x = Dense(6,activation='softmax')(x)
     msh = tf.keras.Model(inputs=inpsh,outputs=x)
     for w in msh.weights:
@@ -125,7 +126,7 @@ def parallel_model():
     #Sy Model
     inpsy = Input(shape=x0.shape[1:])
     x = inpsy
-    x = Dense(32,activation=activation)(x)
+    x = Dense(64,activation=activation)(x)
     x = Dense(2,activation='softmax')(x)
     msy = tf.keras.Model(inputs=inpsy,outputs=x)
     for w in msy.weights:
@@ -141,27 +142,27 @@ def dense_model():
     inp = Input(shape=(9,9,10))
     x = inp
     x = Flatten()(x)
-    x = Dense(64,activation=activation)(x)
+    x = Dense(1024,activation=activation)(x)
     mz = tf.keras.Model(inputs=inp,outputs=x)
     for w in mz.weights:
-        w.assign(w/10)
+        w.assign(w/100)
 
     x0 = x
 
     inpsh = Input(shape=x0.shape[1:])
     x = inpsh
-    x = Dense(64,activation=activation)(x)
+    x = Dense(1024,activation=activation)(x)
     x = Dense(6,activation='softmax')(x)
     msh = tf.keras.Model(inputs=inpsh,outputs=x)
     for w in msh.weights:
-        w.assign(w/10)
+        w.assign(w/100)
 
     inpsy = Input(shape=x0.shape[1:])
     x = inpsy
-    x = Dense(64,activation=activation)(x)
+    x = Dense(1024,activation=activation)(x)
     x = Dense(2,activation='softmax')(x)
     msy = tf.keras.Model(inputs=inpsy,outputs=x)
     for w in msy.weights:
-        w.assign(w/10)
+        w.assign(w/100)
 
     return mz,msh,msy
