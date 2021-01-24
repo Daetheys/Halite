@@ -134,7 +134,7 @@ class ShyBot(Bot):
         sh_obs,sy_obs = observation
         nh,ny = sh_obs.shape[0],sy_obs.shape[0]
         if nh == 0 and ny == 0:
-            return (lambda: np.zeros((0,6),type=float), lambda: np.zeros((0,6),type=float))
+            return (lambda: np.zeros((0,6)), lambda: np.zeros((0,6)))
         no_turn = sy_obs[0][0,0,9] if nh == 0 else sh_obs[0][0,0,9]
         #print('################ {} ################'.format(int(no_turn)))
         #print(nh,ny)
@@ -150,6 +150,83 @@ class ShyBot(Bot):
                 sh_actions = np.vstack([sh_actions, ship_action])
             for i in range(ny):
                 if nh <= 2:
+                    sy_actions = np.vstack([sy_actions, np.array([1,0])])
+                else :
+                    sy_actions = np.vstack([sy_actions, np.array([0,1])])
+            return (lambda :sh_actions,lambda :sy_actions)
+
+
+class FighterBot(Bot):
+    def __init__(self,id):
+        super().__init__(id)
+        self.final_score = 0
+
+    def ship_to_halite(self,sh_obs):
+        def position(X):
+            if np.sum(X) == 0:
+                return None
+            return np.unravel_index(X.argmax(),X.shape)
+        def distance(a,b):
+            xa,ya = a
+            xb,yb = b
+            return abs(xa-xb) + abs(ya-yb)
+
+        no_turn = sh_obs[0,0,9]
+        sh_pos = position(sh_obs[:,:,7])
+        spendable = 10 - no_turn
+        targets = sh_obs[:,:,5] + sh_obs[:,:,6]
+        for x in range(9):
+            for y in range(9):
+                d1 = distance((x,y),sh_pos)
+                targets[x,y] = max(spendable-d1,0) * targets[x,y]
+        targets = (1 - sh_obs[:,:,1] - sh_obs[:,:,3]+ sh_obs[:,:,7]) * targets
+        target = position(targets)
+        if target is None:
+            target = sh_pos
+        has_people = sh_obs[...,1]
+        '''print('{} | {},{} → {},{} , {}'.format(\
+                int(sh_obs[sh_pos[0],sh_pos[1],2]), \
+                sh_pos[0],sh_pos[1], \
+                target[0],target[1], \
+                distance(sh_pos,target)))'''
+        world = sh_obs[...,:7]
+        world[...,1] -= sh_obs[...,7]
+        if sh_pos[0] > target[0] and has_people[sh_pos[0]-1,sh_pos[1]] == 0:
+            world[sh_pos[0]-1,sh_pos[1]] = 1
+            return np.array([0,0,0,1,0,0]),world
+        elif sh_pos[0] < target[0] and has_people[sh_pos[0]+1,sh_pos[1]] == 0:
+            world[sh_pos[0]+1,sh_pos[1]] = 1
+            return np.array([0,1,0,0,0,0]),world
+        elif sh_pos[1] > target[1] and has_people[sh_pos[0],sh_pos[1]-1] == 0:
+            world[sh_pos[0],sh_pos[1]-1] = 1
+            return np.array([1,0,0,0,0,0]),world
+        elif sh_pos[1] < target[1] and has_people[sh_pos[0],sh_pos[1]+1] == 0:
+            world[sh_pos[0]-1,sh_pos[1]+1] = 1
+            return np.array([0,0,1,0,0,0]),world
+        world[...,1] += sh_obs[...,7]
+        return np.array([0,0,0,0,0,1]), world
+
+
+    def compute_actions_proba(self,observation):
+        sh_obs,sy_obs = observation
+        nh,ny = sh_obs.shape[0],sy_obs.shape[0]
+        if nh == 0 and ny == 0:
+            return (lambda: np.zeros((0,6)), lambda: np.zeros((0,6)))
+        no_turn = sy_obs[0][0,0,9] if nh == 0 else sh_obs[0][0,0,9]
+        #print('################ {} ################'.format(int(no_turn)))
+        #print(nh,ny)
+        if no_turn <= 0 :
+            return (lambda: np.array([0,0,0,0,1,0]).astype(float).reshape(1,6),\
+                    lambda : np.zeros((0,2)).astype(float))
+        else:
+            sh_actions, sy_actions = np.zeros((0,6)), np.zeros((0,2))
+            world = None if nh == 0 else sh_obs[0,:,:,0:7]
+            for i in range(nh):
+                obs = np.concatenate((world,sh_obs[i,:,:,7:]), axis=2)
+                ship_action,world = self.ship_to_halite(obs)
+                sh_actions = np.vstack([sh_actions, ship_action])
+            for i in range(ny):
+                if nh <= 20:
                     sy_actions = np.vstack([sy_actions, np.array([1,0])])
                 else :
                     sy_actions = np.vstack([sy_actions, np.array([0,1])])
