@@ -62,6 +62,7 @@ class RandomBot(Bot):
 class ShyBot(Bot):
     def __init__(self,id):
         super().__init__(id)
+        self.final_score = 0
 
     def ship_to_halite(self,sh_obs):
         def position(X):
@@ -77,27 +78,56 @@ class ShyBot(Bot):
         sy_pos = position(sh_obs[:,:,3])
         sh_pos = position(sh_obs[:,:,7])
         if sy_pos is None:
-            return np.array([0,0,0,0,0.5,0.5])
+            return np.array([0,0,0,0,0.5,0.5]),sh_obs[...,:7]
         d = distance(sy_pos,sh_pos)
         spendable = 10 - no_turn
         if spendable < d:
-            return np.array([0,0,0,0,0,1])
+            return np.array([0,0,0,0,0,1]),sh_obs[...,:7]
         targets = sh_obs[:,:,0].copy()
         for x in range(9):
             for y in range(9):
-                d = distance((x,y),sh_pos) + distance((x,y),sy_pos)
-                targets[x,y] = max(d - spendable,0) * targets[x,y]
-        targets = (1 - sh_obs[:,:,1]) * targets
-        target = position(targets)
-        if sh_pos[0] > target[0]:
-            return np.array([1,0,0,0,0,0])
-        elif sh_pos[0] < target[0]:
-            return np.array([0,0,1,0,0,0])
-        elif sh_pos[1] > target[1]:
-            return np.array([0,1,0,0,0,0])
-        elif sh_pos[1] < target[1]:
-            return np.array([0,0,0,1,0,0])
-        return np.array([0,0,0,0,0,1])
+                d1 = distance((x,y),sh_pos) + distance((x,y),sy_pos)
+                targets[x,y] = max(spendable-1-d1,0) * targets[x,y]
+        targets = (1 - sh_obs[:,:,1] - sh_obs[:,:,3]+ sh_obs[:,:,7]) * targets
+        if spendable <= d:
+            target = sy_pos
+        else:
+            target = position(targets)
+            if target is None:
+                target = sy_pos
+        has_people = sh_obs[...,1] + sh_obs[...,4] + sh_obs[...,6]
+        if sy_pos == sh_pos:
+            x,y = sh_pos
+            if has_people[x-1][y] == 0:
+                target = x-1,y
+            elif has_people[x+1][y] == 0:
+                target = x+1,y
+            elif has_people[x][y-1] == 0:
+                target = x,y-1
+            elif has_people[x][y+1] == 0:
+                target = x,y+1
+        '''print('{} | {},{} → {},{} → {} {} , {} + {} = {}'.format(\
+                int(sh_obs[sh_pos[0],sh_pos[1],2]), \
+                sh_pos[0],sh_pos[1], \
+                target[0],target[1], \
+                sy_pos[0],sy_pos[1], \
+                distance(sh_pos,target), distance(target,sy_pos), distance(sh_pos,target)+distance(sy_pos,target)))'''
+        world = sh_obs[...,:7]
+        world[...,1] -= sh_obs[...,7]
+        if sh_pos[0] > target[0] and (has_people[sh_pos[0]-1,sh_pos[1]] == 0 or (target[0] == sy_pos[0] and target[1] == sy_pos[1])):
+            world[sh_pos[0]-1,sh_pos[1]] = 1
+            return np.array([0,0,0,1,0,0]),world
+        elif sh_pos[0] < target[0] and (has_people[sh_pos[0]+1,sh_pos[1]] == 0 or (target[0] == sy_pos[0] and target[1] == sy_pos[1])):
+            world[sh_pos[0]+1,sh_pos[1]] = 1
+            return np.array([0,1,0,0,0,0]),world
+        elif sh_pos[1] > target[1] and (has_people[sh_pos[0],sh_pos[1]-1] == 0 or (target[0] == sy_pos[0] and target[1] == sy_pos[1])):
+            world[sh_pos[0],sh_pos[1]-1] = 1
+            return np.array([1,0,0,0,0,0]),world
+        elif sh_pos[1] < target[1] and (has_people[sh_pos[0],sh_pos[1]+1] == 0 or (target[0] == sy_pos[0] and target[1] == sy_pos[1])):
+            world[sh_pos[0]-1,sh_pos[1]+1] = 1
+            return np.array([0,0,1,0,0,0]),world
+        world[...,1] += sh_obs[...,7]
+        return np.array([0,0,0,0,0,1]), world
 
 
     def compute_actions_proba(self,observation):
@@ -106,17 +136,23 @@ class ShyBot(Bot):
         if nh == 0 and ny == 0:
             return (lambda: np.zeros((0,6),type=float), lambda: np.zeros((0,6),type=float))
         no_turn = sy_obs[0][0,0,9] if nh == 0 else sh_obs[0][0,0,9]
-        print(no_turn,nh,ny)
+        #print('################ {} ################'.format(int(no_turn)))
+        #print(nh,ny)
         if no_turn <= 0 :
             return (lambda: np.array([0,0,0,0,1,0]).astype(float).reshape(1,6),\
                     lambda : np.zeros((0,2)).astype(float))
         else:
             sh_actions, sy_actions = np.zeros((0,6)), np.zeros((0,2))
+            world = None if nh == 0 else sh_obs[0,:,:,0:7]
             for i in range(nh):
-                sh_actions = np.vstack([sh_actions, self.ship_to_halite(sh_obs[i])])
+                obs = np.concatenate((world,sh_obs[i,:,:,7:]), axis=2)
+                ship_action,world = self.ship_to_halite(obs)
+                sh_actions = np.vstack([sh_actions, ship_action])
             for i in range(ny):
-                sy_actions = np.vstack([sy_actions, np.array([1,0])])
-            print(sh_actions, sy_actions)
+                if nh <= 2:
+                    sy_actions = np.vstack([sy_actions, np.array([1,0])])
+                else :
+                    sy_actions = np.vstack([sy_actions, np.array([0,1])])
             return (lambda :sh_actions,lambda :sy_actions)
 
 
